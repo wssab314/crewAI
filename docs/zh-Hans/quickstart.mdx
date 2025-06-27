@@ -1,0 +1,222 @@
+---
+title: 快速开始
+description: 在几分钟内创建您的第一个 CrewAI 智能体和团队
+icon: bolt
+---
+
+# 快速开始指南
+
+这个快速开始指南将带您在几分钟内创建您的第一个 CrewAI 智能体和团队。您将学会基本概念并看到 CrewAI 的实际应用。
+
+## 前提条件
+
+在开始之前，请确保您已经：
+
+- ✅ [安装了 CrewAI](/zh-Hans/installation)
+- ✅ 拥有 Python 3.10+ 环境
+- ✅ 设置了 OpenAI API 密钥（可选，用于 LLM 支持）
+
+## 设置环境变量
+
+如果您计划使用 OpenAI 的模型，请设置您的 API 密钥：
+
+```bash
+export OPENAI_API_KEY="your-api-key-here"
+```
+
+或在 `.env` 文件中：
+
+```
+OPENAI_API_KEY=your-api-key-here
+```
+
+## 创建您的第一个智能体
+
+让我们从创建一个简单的智能体开始：
+
+```python
+from crewai import Agent
+
+# 创建一个研究智能体
+researcher = Agent(
+    role='研究员',
+    goal='收集并分析有关指定主题的信息',
+    backstory="""您是一位经验丰富的研究分析师，具有
+    从各种来源收集准确信息的诀窍。您对细节的关注
+    和批判性思维技能使您能够提供全面的研究报告。""",
+    verbose=True,
+    allow_delegation=False
+)
+```
+
+## 创建您的第一个任务
+
+智能体需要任务来执行。让我们创建一个研究任务：
+
+```python
+from crewai import Task
+
+# 创建一个研究任务
+research_task = Task(
+    description="""对人工智能在医疗保健中的最新趋势进行全面研究。
+    包括主要发展、挑战和未来机会。
+    您的最终答案必须是完整的分析报告""",
+    agent=researcher
+)
+```
+
+## 创建您的第一个团队
+
+现在让我们将智能体和任务组合成一个团队：
+
+```python
+from crewai import Crew, Process
+
+# 创建团队
+crew = Crew(
+    agents=[researcher],
+    tasks=[research_task],
+    verbose=2,  # 您可以设置为 1 或 2 来获得不同的详细程度
+    process=Process.sequential
+)
+```
+
+## 运行您的团队
+
+现在让我们执行团队并看到神奇的效果：
+
+```python
+# 开始执行
+result = crew.kickoff()
+
+print("######################")
+print(result)
+```
+
+## 完整示例代码
+
+这是一个完整的工作示例，您可以复制并运行：
+
+```python
+import os
+from crewai import Agent, Task, Crew, Process
+
+# 设置 OpenAI API 密钥（如果使用 OpenAI）
+os.environ["OPENAI_API_KEY"] = "your-api-key-here"
+
+# 定义您的智能体
+researcher = Agent(
+    role='高级研究分析师',
+    goal='发现并分析最新的 AI 和数据科学趋势',
+    backstory="""您在数据科学和 AI 领域工作了十多年。
+    您以发现新兴趋势和技术的能力而闻名。
+    您有诀窍将复杂的技术概念分解成易于理解的见解。""",
+    verbose=True,
+    allow_delegation=False
+)
+
+writer = Agent(
+    role='技术内容策略师',
+    goal='根据研究见解撰写引人入胜的技术内容',
+    backstory="""您是一位著名的技术作家，专门从事 AI 和数据科学主题。
+    您以能够将复杂的技术概念转化为引人注目、易于理解的叙述的能力而闻名。""",
+    verbose=True,
+    allow_delegation=True
+)
+
+# 定义您的任务
+research_task = Task(
+    description="""对 2024 年 AI 智能体的最新趋势进行全面分析。
+    识别关键技术、主要参与者和市场机会。
+    您的最终报告应该包括：
+    - 当前市场概览
+    - 新兴技术和工具
+    - 主要参与者分析
+    - 未来机会预测""",
+    agent=researcher
+)
+
+write_task = Task(
+    description="""使用研究分析师的见解，撰写一篇关于
+    AI 智能体未来的引人入胜博客文章。您的文章应该是：
+    - 信息丰富但易于理解
+    - 引人入胜且写得很好
+    - 针对技术受众进行优化
+    - 包含可行的见解""",
+    agent=writer
+)
+
+# 实例化您的团队，设置顺序流程
+crew = Crew(
+    agents=[researcher, writer],
+    tasks=[research_task, write_task],
+    verbose=2
+)
+
+# 开始工作
+result = crew.kickoff()
+
+print("######################")
+print(result)
+```
+
+## 理解输出
+
+当您运行团队时，您将看到：
+
+1. **详细的执行日志** - 显示每个智能体正在做什么
+2. **智能体之间的交互** - 他们如何协作和分享信息
+3. **最终结果** - 您任务的完成输出
+
+## 下一步
+
+恭喜！您刚刚创建并运行了您的第一个 CrewAI 团队。现在您可以：
+
+<CardGroup cols={2}>
+  <Card title="探索核心概念" icon="lightbulb" href="/zh-Hans/concepts/agents">
+    深入了解智能体、任务、团队和流程
+  </Card>
+  <Card
+    title="构建更复杂的团队"
+    icon="users-gear"
+    href="/zh-Hans/guides/crews/first-crew"
+  >
+    学习创建具有多个智能体和复杂工作流程的团队
+  </Card>
+</CardGroup>
+
+<CardGroup cols={2}>
+  <Card title="添加工具（Tools）" icon="wrench" href="/zh-Hans/tools/overview">
+    了解如何为您的智能体配备强大的工具
+  </Card>
+  <Card
+    title="自定义您的设置"
+    icon="gear"
+    href="/zh-Hans/guides/advanced/customizing-prompts"
+  >
+    学习高级配置和自定义选项
+  </Card>
+</CardGroup>
+
+## 故障排除
+
+**常见问题：**
+
+**"没有提供 API 密钥"错误**
+
+- 确保设置了 OPENAI_API_KEY 环境变量
+- 或在代码中显式传递 API 密钥
+
+**智能体没有按预期运行**
+
+- 检查您的智能体角色和目标是否清晰
+- 确保任务描述具体且可行
+- 增加详细程度以获得更多洞察
+
+**性能缓慢**
+
+- 考虑优化您的提示
+- 检查您的互联网连接
+- 验证 API 限制和配额
+
+需要更多帮助？加入我们的 [社区论坛](https://community.crewai.com) 或查看我们的 [故障排除指南](/zh-Hans/guides/troubleshooting)。

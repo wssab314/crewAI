@@ -1,0 +1,175 @@
+---
+title: 安装
+description: 在您的开发环境中设置 CrewAI
+icon: wrench
+---
+
+# 安装 CrewAI
+
+开始使用 CrewAI 只需几分钟时间。本指南将带您完成安装过程并验证您的设置。
+
+## 系统要求
+
+在开始之前，请确保您的系统满足以下要求：
+
+- **Python 3.10 或更高版本**
+- **pip 包管理器**
+- **稳定的互联网连接**
+
+## 基础安装
+
+### 使用 pip 安装
+
+要安装 CrewAI 及其核心依赖项，请在终端中运行：
+
+```bash
+pip install crewai
+```
+
+### 使用工具（Tools）安装
+
+如果您计划使用 CrewAI 的预构建工具，我们建议安装完整的工具包：
+
+```bash
+pip install 'crewai[tools]'
+```
+
+这将包括额外的实用工具，如：
+
+- 文件操作工具
+- 网页抓取工具
+- 搜索工具
+- 数据库连接器
+
+## 验证安装
+
+要验证 CrewAI 是否正确安装，请创建一个简单的测试脚本：
+
+```python
+from crewai import Agent, Task, Crew
+
+# 创建一个简单的智能体
+agent = Agent(
+    role='测试智能体',
+    goal='验证 CrewAI 安装',
+    backstory='我是一个用于测试安装的智能体。'
+)
+
+# 创建一个任务
+task = Task(
+    description='说 "Hello CrewAI!"',
+    agent=agent
+)
+
+# 创建团队并运行
+crew = Crew(
+    agents=[agent],
+    tasks=[task]
+)
+
+print("CrewAI 安装成功！")
+```
+
+## 可选依赖项
+
+根据您的用例，您可能想要安装额外的依赖项：
+
+### 嵌入（Embeddings）支持
+
+```bash
+pip install 'crewai[embeddings]'
+```
+
+### AgentOps 集成
+
+```bash
+pip install 'crewai[agentops]'
+```
+
+### PDF 处理
+
+```bash
+pip install 'crewai[pdfplumber]'
+```
+
+### 数据处理
+
+```bash
+pip install 'crewai[pandas]'
+```
+
+### Excel 支持
+
+```bash
+pip install 'crewai[openpyxl]'
+```
+
+### 内存增强
+
+```bash
+pip install 'crewai[mem0]'
+```
+
+## 开发环境设置
+
+如果您计划为 CrewAI 贡献或需要最新的开发版本：
+
+### 从源码安装
+
+```bash
+# 克隆仓库
+git clone https://github.com/crewAIInc/crewAI.git
+cd crewAI
+
+# 创建虚拟环境
+python -m venv venv
+source venv/bin/activate  # 在 Windows 上：venv\Scripts\activate
+
+# 安装开发依赖
+pip install -e .
+```
+
+## 故障排除
+
+### 常见问题
+
+**ImportError: 无法导入 'crewai'**
+
+- 确保您使用的是正确的 Python 环境
+- 验证 pip 安装是否成功完成
+- 尝试重新安装：`pip uninstall crewai && pip install crewai`
+
+**权限错误**
+
+- 在安装命令中使用 `--user` 标志：`pip install --user crewai`
+- 或者创建虚拟环境
+
+**版本冲突**
+
+- 使用虚拟环境来隔离依赖项
+- 检查是否与其他已安装的包有冲突
+
+### 获取帮助
+
+如果您遇到安装问题：
+
+1. 查看 [GitHub Issues](https://github.com/crewAIInc/crewAI/issues)
+2. 加入我们的 [Discord 社区](https://discord.gg/X4JWnZnxPb)
+3. 发邮件至 [support@crewai.com](mailto:support@crewai.com)
+
+## 下一步
+
+现在您已经安装了 CrewAI，您可以：
+
+<CardGroup cols={2}>
+  <Card title="快速开始" icon="bolt" href="/zh-Hans/quickstart">
+    创建您的第一个 CrewAI 智能体和任务
+  </Card>
+  <Card
+    title="构建您的第一个团队"
+    icon="users-gear"
+    href="/zh-Hans/guides/crews/first-crew"
+  >
+    学习如何创建协作的智能体团队
+  </Card>
+</CardGroup>{" "}

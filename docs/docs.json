@@ -741,6 +741,368 @@
             ]
           }
         ]
+      },
+      {
+        "language": "zh-Hans",
+        "global": {
+          "anchors": [
+            {
+              "anchor": "官网",
+              "href": "https://crewai.com",
+              "icon": "globe"
+            },
+            {
+              "anchor": "论坛",
+              "href": "https://community.crewai.com",
+              "icon": "discourse"
+            },
+            {
+              "anchor": "Crew GPT",
+              "href": "https://chatgpt.com/g/g-qqTuUWsBY-crewai-assistant",
+              "icon": "robot"
+            },
+            {
+              "anchor": "获取帮助",
+              "href": "mailto:support@crewai.com",
+              "icon": "headset"
+            }
+          ]
+        },
+        "tabs": [
+          {
+            "tab": "文档",
+            "groups": [
+              {
+                "group": "开始使用",
+                "pages": [
+                  "zh-Hans/introduction",
+                  "zh-Hans/installation",
+                  "zh-Hans/quickstart"
+                ]
+              },
+              {
+                "group": "指南",
+                "pages": [
+                  {
+                    "group": "策略",
+                    "pages": [
+                      "zh-Hans/guides/concepts/evaluating-use-cases"
+                    ]
+                  },
+                  {
+                    "group": "智能体（Agents）",
+                    "pages": [
+                      "zh-Hans/guides/agents/crafting-effective-agents"
+                    ]
+                  },
+                  {
+                    "group": "团队（Crews）",
+                    "pages": [
+                      "zh-Hans/guides/crews/first-crew"
+                    ]
+                  },
+                  {
+                    "group": "流程（Flows）",
+                    "pages": [
+                      "zh-Hans/guides/flows/first-flow",
+                      "zh-Hans/guides/flows/mastering-flow-state"
+                    ]
+                  },
+                  {
+                    "group": "高级",
+                    "pages": [
+                      "zh-Hans/guides/advanced/customizing-prompts",
+                      "zh-Hans/guides/advanced/fingerprinting"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "核心概念",
+                "pages": [
+                  "zh-Hans/concepts/agents",
+                  "zh-Hans/concepts/tasks",
+                  "zh-Hans/concepts/crews",
+                  "zh-Hans/concepts/flows",
+                  "zh-Hans/concepts/knowledge",
+                  "zh-Hans/concepts/llms",
+                  "zh-Hans/concepts/processes",
+                  "zh-Hans/concepts/collaboration",
+                  "zh-Hans/concepts/training",
+                  "zh-Hans/concepts/memory",
+                  "zh-Hans/concepts/reasoning",
+                  "zh-Hans/concepts/planning",
+                  "zh-Hans/concepts/testing",
+                  "zh-Hans/concepts/cli",
+                  "zh-Hans/concepts/tools",
+                  "zh-Hans/concepts/event-listener"
+                ]
+              },
+              {
+                "group": "MCP 集成",
+                "pages": [
+                  "zh-Hans/mcp/overview",
+                  "zh-Hans/mcp/stdio",
+                  "zh-Hans/mcp/sse",
+                  "zh-Hans/mcp/streamable-http",
+                  "zh-Hans/mcp/multiple-servers",
+                  "zh-Hans/mcp/security"
+                ]
+              },
+              {
+                "group": "工具（Tools）",
+                "pages": [
+                  "zh-Hans/tools/overview",
+                  {
+                    "group": "文件与文档",
+                    "pages": [
+                      "zh-Hans/tools/file-document/overview",
+                      "zh-Hans/tools/file-document/filereadtool",
+                      "zh-Hans/tools/file-document/filewritetool",
+                      "zh-Hans/tools/file-document/pdfsearchtool",
+                      "zh-Hans/tools/file-document/docxsearchtool",
+                      "zh-Hans/tools/file-document/mdxsearchtool",
+                      "zh-Hans/tools/file-document/xmlsearchtool",
+                      "zh-Hans/tools/file-document/txtsearchtool",
+                      "zh-Hans/tools/file-document/jsonsearchtool",
+                      "zh-Hans/tools/file-document/csvsearchtool",
+                      "zh-Hans/tools/file-document/directorysearchtool",
+                      "zh-Hans/tools/file-document/directoryreadtool"
+                    ]
+                  },
+                  {
+                    "group": "网页抓取与浏览",
+                    "pages": [
+                      "zh-Hans/tools/web-scraping/overview",
+                      "zh-Hans/tools/web-scraping/scrapewebsitetool",
+                      "zh-Hans/tools/web-scraping/scrapeelementfromwebsitetool",
+                      "zh-Hans/tools/web-scraping/scrapflyscrapetool",
+                      "zh-Hans/tools/web-scraping/seleniumscrapingtool",
+                      "zh-Hans/tools/web-scraping/scrapegraphscrapetool",
+                      "zh-Hans/tools/web-scraping/spidertool",
+                      "zh-Hans/tools/web-scraping/browserbaseloadtool",
+                      "zh-Hans/tools/web-scraping/hyperbrowserloadtool",
+                      "zh-Hans/tools/web-scraping/stagehandtool",
+                      "zh-Hans/tools/web-scraping/firecrawlcrawlwebsitetool",
+                      "zh-Hans/tools/web-scraping/firecrawlscrapewebsitetool",
+                      "zh-Hans/tools/web-scraping/oxylabsscraperstool"
+                    ]
+                  },
+                  {
+                    "group": "搜索与研究",
+                    "pages": [
+                      "zh-Hans/tools/search-research/overview",
+                      "zh-Hans/tools/search-research/serperdevtool",
+                      "zh-Hans/tools/search-research/bravesearchtool",
+                      "zh-Hans/tools/search-research/exasearchtool",
+                      "zh-Hans/tools/search-research/linkupsearchtool",
+                      "zh-Hans/tools/search-research/githubsearchtool",
+                      "zh-Hans/tools/search-research/websitesearchtool",
+                      "zh-Hans/tools/search-research/codedocssearchtool",
+                      "zh-Hans/tools/search-research/youtubechannelsearchtool",
+                      "zh-Hans/tools/search-research/youtubevideosearchtool"
+                    ]
+                  },
+                  {
+                    "group": "数据库与数据",
+                    "pages": [
+                      "zh-Hans/tools/database-data/overview",
+                      "zh-Hans/tools/database-data/mysqltool",
+                      "zh-Hans/tools/database-data/pgsearchtool",
+                      "zh-Hans/tools/database-data/snowflakesearchtool",
+                      "zh-Hans/tools/database-data/nl2sqltool",
+                      "zh-Hans/tools/database-data/qdrantvectorsearchtool",
+                      "zh-Hans/tools/database-data/weaviatevectorsearchtool"
+                    ]
+                  },
+                  {
+                    "group": "AI与机器学习",
+                    "pages": [
+                      "zh-Hans/tools/ai-ml/overview",
+                      "zh-Hans/tools/ai-ml/dalletool",
+                      "zh-Hans/tools/ai-ml/visiontool",
+                      "zh-Hans/tools/ai-ml/aimindtool",
+                      "zh-Hans/tools/ai-ml/llamaindextool",
+                      "zh-Hans/tools/ai-ml/langchaintool",
+                      "zh-Hans/tools/ai-ml/ragtool",
+                      "zh-Hans/tools/ai-ml/codeinterpretertool"
+                    ]
+                  },
+                  {
+                    "group": "云服务与存储",
+                    "pages": [
+                      "zh-Hans/tools/cloud-storage/overview",
+                      "zh-Hans/tools/cloud-storage/s3readertool",
+                      "zh-Hans/tools/cloud-storage/s3writertool",
+                      "zh-Hans/tools/cloud-storage/bedrockinvokeagenttool",
+                      "zh-Hans/tools/cloud-storage/bedrockkbretriever"
+                    ]
+                  },
+                  {
+                    "group": "自动化与集成",
+                    "pages": [
+                      "zh-Hans/tools/automation/overview",
+                      "zh-Hans/tools/automation/apifyactorstool",
+                      "zh-Hans/tools/automation/composiotool",
+                      "zh-Hans/tools/automation/multiontool"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "可观测性",
+                "pages": [
+                  "zh-Hans/observability/overview",
+                  "zh-Hans/observability/agentops",
+                  "zh-Hans/observability/arize-phoenix",
+                  "zh-Hans/observability/langfuse",
+                  "zh-Hans/observability/langtrace",
+                  "zh-Hans/observability/maxim",
+                  "zh-Hans/observability/mlflow",
+                  "zh-Hans/observability/openlit",
+                  "zh-Hans/observability/opik",
+                  "zh-Hans/observability/patronus-evaluation",
+                  "zh-Hans/observability/portkey",
+                  "zh-Hans/observability/weave"
+                ]
+              },
+              {
+                "group": "学习资源",
+                "pages": [
+                  "zh-Hans/learn/overview",
+                  "zh-Hans/learn/llm-selection-guide",
+                  "zh-Hans/learn/conditional-tasks",
+                  "zh-Hans/learn/coding-agents",
+                  "zh-Hans/learn/create-custom-tools",
+                  "zh-Hans/learn/custom-llm",
+                  "zh-Hans/learn/custom-manager-agent",
+                  "zh-Hans/learn/customizing-agents",
+                  "zh-Hans/learn/dalle-image-generation",
+                  "zh-Hans/learn/force-tool-output-as-result",
+                  "zh-Hans/learn/hierarchical-process",
+                  "zh-Hans/learn/human-input-on-execution",
+                  "zh-Hans/learn/kickoff-async",
+                  "zh-Hans/learn/kickoff-for-each",
+                  "zh-Hans/learn/llm-connections",
+                  "zh-Hans/learn/multimodal-agents",
+                  "zh-Hans/learn/replay-tasks-from-latest-crew-kickoff",
+                  "zh-Hans/learn/sequential-process",
+                  "zh-Hans/learn/using-annotations"
+                ]
+              },
+              {
+                "group": "遥测",
+                "pages": [
+                  "zh-Hans/telemetry"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "企业版",
+            "groups": [
+              {
+                "group": "开始使用",
+                "pages": [
+                  "zh-Hans/enterprise/introduction"
+                ]
+              },
+              {
+                "group": "功能特性",
+                "pages": [
+                  "zh-Hans/enterprise/features/tool-repository",
+                  "zh-Hans/enterprise/features/webhook-streaming",
+                  "zh-Hans/enterprise/features/traces",
+                  "zh-Hans/enterprise/features/hallucination-guardrail",
+                  "zh-Hans/enterprise/features/integrations"
+                ]
+              },
+              {
+                "group": "集成文档",
+                "pages": [
+                  "zh-Hans/enterprise/integrations/asana",
+                  "zh-Hans/enterprise/integrations/box",
+                  "zh-Hans/enterprise/integrations/clickup",
+                  "zh-Hans/enterprise/integrations/github",
+                  "zh-Hans/enterprise/integrations/gmail",
+                  "zh-Hans/enterprise/integrations/google_calendar",
+                  "zh-Hans/enterprise/integrations/google_sheets",
+                  "zh-Hans/enterprise/integrations/hubspot",
+                  "zh-Hans/enterprise/integrations/jira",
+                  "zh-Hans/enterprise/integrations/linear",
+                  "zh-Hans/enterprise/integrations/notion",
+                  "zh-Hans/enterprise/integrations/salesforce",
+                  "zh-Hans/enterprise/integrations/shopify",
+                  "zh-Hans/enterprise/integrations/slack",
+                  "zh-Hans/enterprise/integrations/stripe",
+                  "zh-Hans/enterprise/integrations/zendesk"
+                ]
+              },
+              {
+                "group": "指南",
+                "pages": [
+                  "zh-Hans/enterprise/guides/build-crew",
+                  "zh-Hans/enterprise/guides/deploy-crew",
+                  "zh-Hans/enterprise/guides/kickoff-crew",
+                  "zh-Hans/enterprise/guides/update-crew",
+                  "zh-Hans/enterprise/guides/enable-crew-studio",
+                  "zh-Hans/enterprise/guides/azure-openai-setup",
+                  "zh-Hans/enterprise/guides/hubspot-trigger",
+                  "zh-Hans/enterprise/guides/react-component-export",
+                  "zh-Hans/enterprise/guides/salesforce-trigger",
+                  "zh-Hans/enterprise/guides/slack-trigger",
+                  "zh-Hans/enterprise/guides/team-management",
+                  "zh-Hans/enterprise/guides/webhook-automation",
+                  "zh-Hans/enterprise/guides/human-in-the-loop",
+                  "zh-Hans/enterprise/guides/zapier-trigger"
+                ]
+              },
+              {
+                "group": "资源",
+                "pages": [
+                  "zh-Hans/enterprise/resources/frequently-asked-questions"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "API 参考",
+            "groups": [
+              {
+                "group": "开始使用",
+                "pages": [
+                  "zh-Hans/api-reference/introduction"
+                ]
+              },
+              {
+                "group": "端点",
+                "openapi": "enterprise-api.yaml"
+              }
+            ]
+          },
+          {
+            "tab": "示例",
+            "groups": [
+              {
+                "group": "示例",
+                "pages": [
+                  "zh-Hans/examples/example"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "更新日志",
+            "groups": [
+              {
+                "group": "更新日志",
+                "pages": [
+                  "zh-Hans/changelog"
+                ]
+              }
+            ]
+          }
+        ]
       }
     ]
   },

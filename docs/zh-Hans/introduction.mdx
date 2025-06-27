@@ -1,0 +1,98 @@
+---
+title: 介绍
+description: 构建智能体团队，协同解决复杂任务
+icon: handshake
+---
+
+# 什么是 CrewAI？
+
+**CrewAI 是一个轻量级、超快速的 Python 框架，完全从零构建——完全独立于 LangChain 或其他智能体框架。**
+
+CrewAI 为开发者提供高级别的简洁性和精确的底层控制，是为任何场景创建自主 AI 智能体的理想选择：
+
+- **[CrewAI 团队（Crews）](/zh-Hans/guides/crews/first-crew)**：针对自主性和协作智能进行优化，让您能够创建 AI 团队，其中每个智能体都有特定的角色、工具和目标。
+- **[CrewAI 流程（Flows）](/zh-Hans/guides/flows/first-flow)**：实现精细的、事件驱动的控制，通过单个 LLM 调用进行精确的任务编排，并原生支持团队。
+
+超过 100,000 名开发者通过我们的社区课程获得认证，CrewAI 正在迅速成为企业级 AI 自动化的标准。
+
+## 团队（Crews）如何工作
+
+<Note>
+  就像公司有部门（销售、工程、营销）在领导下协同工作以实现业务目标一样，CrewAI
+  帮助您创建具有专业角色的 AI 智能体组织，协作完成复杂任务。
+</Note>
+
+<Frame caption="CrewAI 框架概览">
+  <img src="/images/crews.png" alt="CrewAI 框架概览" />
+</Frame>
+
+| 组件                    |       描述       | 主要特性                                                                                  |
+| :---------------------- | :--------------: | :---------------------------------------------------------------------------------------- |
+| **团队（Crew）**        |     顶级组织     | • 管理 AI 智能体团队<br/>• 监督工作流程<br/>• 确保协作<br/>• 交付成果                     |
+| **AI 智能体（Agents）** |   专业团队成员   | • 具有特定角色（研究员、写作者）<br/>• 使用指定工具<br/>• 可以委派任务<br/>• 做出自主决策 |
+| **流程（Process）**     | 工作流程管理系统 | • 定义协作模式<br/>• 控制任务分配<br/>• 管理交互<br/>• 确保高效执行                       |
+| **任务（Tasks）**       |     个人分配     | • 有明确目标<br/>• 使用特定工具<br/>• 输入到更大流程<br/>• 产生可行结果                   |
+
+### 一切如何协同工作
+
+1. **团队（Crew）** 组织整体操作
+2. **AI 智能体（Agents）** 处理专业任务
+3. **流程（Process）** 确保顺畅协作
+4. **任务（Tasks）** 完成以实现目标
+
+## 主要特性
+
+<CardGroup cols={2}>
+  <Card title="基于角色的智能体" icon="users">
+    创建具有明确角色、专业知识和目标的专业智能体——从研究员到分析师到写作者
+  </Card>
+  <Card title="灵活的工具" icon="screwdriver-wrench">
+    为智能体配备自定义工具和 API，与外部服务和数据源交互
+  </Card>
+  <Card title="智能协作" icon="people-arrows">
+    智能体协同工作，分享见解并协调任务以实现复杂目标
+  </Card>
+  <Card title="任务管理" icon="list-check">
+    定义顺序或并行工作流程，智能体自动处理任务依赖关系
+  </Card>
+</CardGroup>
+
+## 为什么选择 CrewAI？
+
+- 🧠 **自主操作**：智能体根据其角色和可用工具做出智能决策
+- 📝 **自然交互**：智能体像人类团队成员一样沟通和协作
+- 🛠️ **可扩展设计**：易于添加新工具、角色和能力
+- 🚀 **生产就绪**：为现实应用中的可靠性和可扩展性而构建
+- 🔒 **安全为先**：考虑企业安全要求而设计
+- 💰 **成本效益**：优化以最小化令牌使用和 API 调用
+
+## 准备开始构建？
+
+<CardGroup cols={2}>
+  <Card
+    title="构建您的第一个团队"
+    icon="users-gear"
+    href="/zh-Hans/guides/crews/first-crew"
+  >
+    分步教程，创建协作的 AI 团队，共同解决复杂问题。
+  </Card>
+  <Card
+    title="构建您的第一个流程"
+    icon="diagram-project"
+    href="/zh-Hans/guides/flows/first-flow"
+  >
+    学习如何创建结构化的、事件驱动的工作流程，精确控制执行。
+  </Card>
+</CardGroup>
+
+<CardGroup cols={3}>
+  <Card title="安装 CrewAI" icon="wrench" href="/zh-Hans/installation">
+    在您的开发环境中开始使用 CrewAI。
+  </Card>
+  <Card title="快速开始" icon="bolt" href="/zh-Hans/quickstart">
+    遵循我们的快速开始指南创建您的第一个 CrewAI 智能体并获得实践经验。
+  </Card>
+  <Card title="加入社区" icon="comments" href="https://community.crewai.com">
+    与其他开发者联系，获得帮助，并分享您的 CrewAI 经验。
+  </Card>
+</CardGroup>{" "}
