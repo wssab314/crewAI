@@ -1,0 +1,239 @@
+---
+title: 自定义提示
+description: 深入了解 CrewAI 的低级提示自定义，为不同模型和语言启用超级自定义和复杂用例。
+icon: message-pen
+---
+
+## 为什么要自定义提示？
+
+虽然 CrewAI 的默认提示在许多场景下都运行良好，但低级自定义为显著更灵活和强大的代理行为打开了大门。以下是你可能想要利用这种更深层控制的原因：
+
+1. **针对特定 LLM 优化** – 不同的模型（如 GPT-4、Claude 或 Llama）在针对其独特架构定制的提示格式下表现最佳。
+2. **更改语言** – 构建专门用非英语语言操作的代理，精确处理语言细微差别。
+3. **专门化复杂领域** – 为医疗保健、金融或法律等高度专业化的行业调整提示。
+4. **调整语调和风格** – 使代理更正式、随意、有创意或分析性。
+5. **支持超级自定义用例** – 利用高级提示结构和格式来满足复杂的项目特定需求。
+
+本指南探索如何在更低级别利用 CrewAI 的提示，为你提供对代理思考和交互方式的细粒度控制。
+
+## 理解 CrewAI 的提示系统
+
+在底层，CrewAI 采用了一个你可以广泛自定义的模块化提示系统：
+
+- **代理模板** – 控制每个代理处理其分配角色的方法。
+- **提示片段** – 控制专门化行为，如任务、工具使用和输出结构。
+- **错误处理** – 指导代理如何响应失败、异常或超时。
+- **工具特定提示** – 定义如何调用或使用工具的详细指令。
+
+查看 [CrewAI 存储库中的原始提示模板](https://github.com/crewAIInc/crewAI/blob/main/src/crewai/translations/en.json) 以了解这些元素是如何组织的。从那里，你可以根据需要覆盖或调整它们以解锁高级行为。
+
+## 理解默认系统指令
+
+<Warning>
+**生产透明度问题**：CrewAI 会自动在你的提示中注入你可能不知道的默认指令。本节解释底层发生的情况以及如何获得完全控制。
+</Warning>
+
+当你使用 `role`、`goal` 和 `backstory` 定义代理时，CrewAI 会自动添加控制格式和行为的额外系统指令。了解这些默认注入对于需要完全提示透明度的生产系统至关重要。
+
+### CrewAI 自动注入的内容
+
+基于你的代理配置，CrewAI 添加不同的默认指令：
+
+#### 对于没有工具的代理
+```text
+"我必须使用这些格式，我的工作取决于它！"
+```
+
+#### 对于有工具的代理
+```text
+"重要：在你的响应中使用以下格式：
+
+思考：你应该总是思考要做什么
+行动：要采取的行动，只能是 [tool_names] 中的一个名称
+行动输入：行动的输入，只是一个简单的 JSON 对象...
+```
+
+#### 对于结构化输出（JSON/Pydantic）
+```text
+"确保你的最终答案只包含以下格式的内容：{output_format}
+确保最终输出不包含任何代码块标记，如 ```json 或 ```python。"
+```
+
+### 查看完整的系统提示
+
+要准确查看发送给你的 LLM 的提示，你可以检查生成的提示：
+
+```python
+from crewai import Agent, Crew, Task
+from crewai.utilities.prompts import Prompts
+
+# 创建你的代理
+agent = Agent(
+    role="数据分析师",
+    goal="分析数据并提供洞察",
+    backstory="你是一个拥有10年经验的专家数据分析师。",
+    verbose=True
+)
+
+# 创建示例任务
+task = Task(
+    description="分析销售数据并识别趋势",
+    expected_output="包含关键洞察和趋势的详细分析",
+    agent=agent
+)
+
+# 创建提示生成器
+prompt_generator = Prompts(
+    agent=agent,
+    has_tools=len(agent.tools) > 0,
+    use_system_prompt=agent.use_system_prompt
+)
+
+# 生成并检查实际提示
+generated_prompt = prompt_generator.task_execution()
+
+# 打印将发送给 LLM 的完整系统提示
+if "system" in generated_prompt:
+    print("=== 系统提示 ===")
+    print(generated_prompt["system"])
+    print("\n=== 用户提示 ===")
+    print(generated_prompt["user"])
+else:
+    print("=== 完整提示 ===")
+    print(generated_prompt["prompt"])
+
+# 你还可以看到任务描述如何被格式化
+print("\n=== 任务上下文 ===")
+print(f"任务描述：{task.description}")
+print(f"预期输出：{task.expected_output}")
+```
+
+### 覆盖默认指令
+
+你有几个选项来获得对提示的完全控制：
+
+#### 选项1：自定义模板（推荐）
+```python
+from crewai import Agent
+
+# 定义你自己的不带默认指令的系统模板
+custom_system_template = """你是 {role}。{backstory}
+你的目标是：{goal}
+
+自然和对话式地回应。专注于提供有用、准确的信息。"""
+
+custom_prompt_template = """任务：{input}
+
+请深思熟虑地完成这个任务。"""
+
+agent = Agent(
+    role="研究助理",
+    goal="帮助用户找到准确信息",
+    backstory="你是一个有用的研究助理。",
+    system_template=custom_system_template,
+    prompt_template=custom_prompt_template,
+    use_system_prompt=True  # 使用分离的系统/用户消息
+)
+```
+
+#### 选项2：自定义提示文件
+创建一个 `custom_prompts.json` 文件来覆盖特定的提示片段：
+
+```json
+{
+  "slices": {
+    "no_tools": "\n以自然、对话的方式提供你的最佳答案。",
+    "tools": "\n你可以使用这些工具：{tools}\n\n在有帮助时使用它们，但要自然地回应。",
+    "formatted_task_instructions": "将你的回应格式化为：{output_format}"
+  }
+}
+```
+
+然后在你的团队中使用它：
+
+```python
+crew = Crew(
+    agents=[agent],
+    tasks=[task],
+    prompt_file="custom_prompts.json",
+    verbose=True
+)
+```
+
+#### 选项3：为 o1 模型禁用系统提示
+```python
+agent = Agent(
+    role="分析师",
+    goal="分析数据",
+    backstory="专家分析师",
+    use_system_prompt=False  # 禁用系统提示分离
+)
+```
+
+### 使用可观测性工具进行调试
+
+为了生产透明度，集成可观测性平台来监控所有提示和 LLM 交互。这让你能够准确看到哪些提示（包括默认指令）正在发送给你的 LLM。
+
+查看我们的 [可观测性文档](/en/observability/overview) 获取与各种平台的详细集成指南，包括 Langfuse、MLflow、Weights & Biases 和自定义日志解决方案。
+
+### 生产最佳实践
+
+1. **始终检查生成的提示** 在部署到生产之前
+2. **使用自定义模板** 当你需要对提示内容进行完全控制时
+3. **集成可观测性工具** 进行持续的提示监控（参见 [可观测性文档](/en/observability/overview)）
+4. **使用不同的 LLM 进行测试** 因为默认指令在不同模型中可能表现不同
+5. **记录你的提示自定义** 以保持团队透明度
+
+<Tip>
+默认指令的存在是为了确保一致的代理行为，但它们可能会干扰特定领域的要求。使用上述自定义选项在生产系统中保持对代理行为的完全控制。
+</Tip>
+
+## 管理提示文件的最佳实践
+
+在进行低级提示自定义时，遵循这些指导原则以保持组织性和可维护性：
+
+1. **保持文件分离** – 将自定义提示存储在主代码库之外的专用 JSON 文件中。
+2. **版本控制** – 在存储库中跟踪更改，确保对提示调整的清晰文档。
+3. **按模型或语言组织** – 使用像 `prompts_llama.json` 或 `prompts_es.json` 这样的命名方案来快速识别专门配置。
+4. **记录更改** – 提供注释或维护 README，详细说明自定义的目的和范围。
+5. **最小化更改** – 只覆盖你真正需要调整的特定片段，保持其他所有功能的默认功能完整。
+
+## 高级自定义示例
+
+### 多语言代理
+```python
+# 中文专用代理模板
+chinese_template = """你是一个专业的{role}。{backstory}
+你的目标：{goal}
+
+请使用简洁、准确的中文回应。保持专业和有用的语调。"""
+
+chinese_agent = Agent(
+    role="技术顾问",
+    goal="为客户提供技术解决方案建议",
+    backstory="你是一位经验丰富的技术专家，擅长为企业提供技术咨询服务。",
+    system_template=chinese_template
+)
+```
+
+### 特定领域代理
+```python
+# 医疗专业代理
+medical_template = """你是一个{role}。{backstory}
+你的目标：{goal}
+
+重要提醒：
+- 始终基于循证医学提供建议
+- 明确声明你不能替代专业医疗诊断
+- 建议患者咨询医疗专业人士
+- 使用准确的医学术语但确保可理解性"""
+
+medical_agent = Agent(
+    role="医疗信息顾问",
+    goal="提供准确的医疗健康信息",
+    backstory="你是一位具有丰富临床经验的医疗专业人士。",
+    system_template=medical_template
+)
+```
+
+通过掌握这些提示自定义技术，你可以创建高度专业化、针对特定需求优化的 AI 代理，充分发挥 CrewAI 框架的潜力。

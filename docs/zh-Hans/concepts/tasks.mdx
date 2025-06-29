@@ -1,0 +1,381 @@
+---
+title: 任务（Tasks）
+description: 在 CrewAI 框架中管理和创建任务的详细指南。
+icon: list-check
+---
+
+## 概述
+
+在 CrewAI 框架中，`任务（Task）` 是由 `智能体（Agent）` 完成的特定作业。
+
+任务（Tasks）提供执行所需的所有必要细节，如描述、负责的智能体、所需工具（Tools）等，以促进各种复杂的操作。
+
+CrewAI 中的任务可以是协作的，需要多个智能体（Agents）协同工作。这通过任务属性进行管理，并由团队（Crew）的流程（Process）进行编排，增强团队合作和效率。
+
+<Note type="info" title="企业版增强功能：可视化任务构建器">
+CrewAI 企业版在团队工作室（Crew Studio）中包含可视化任务构建器（Visual Task Builder），简化复杂任务创建和链接。可视化设计您的任务流程并实时测试，无需编写代码。
+
+![任务构建器截图](/images/enterprise/crew-studio-interface.png)
+
+可视化任务构建器提供：
+
+- 拖拽式任务创建
+- 可视化任务依赖和流程
+- 实时测试和验证
+- 便捷分享和协作
+  </Note>
+
+### 任务执行流程
+
+任务可以通过两种方式执行：
+
+- **顺序执行（Sequential）**：任务按定义的顺序执行
+- **分层执行（Hierarchical）**：任务根据智能体的角色和专业知识分配
+
+执行流程在创建团队（Crew）时定义：
+
+```python Code
+crew = Crew(
+    agents=[agent1, agent2],
+    tasks=[task1, task2],
+    process=Process.sequential  # 或 Process.hierarchical
+)
+```
+
+## 任务属性
+
+| 属性                       | 参数              | 类型                        | 描述                                                             |
+| :------------------------- | :---------------- | :-------------------------- | :--------------------------------------------------------------- |
+| **描述**                   | `description`     | `str`                       | 对任务内容的清晰、简洁说明。                                     |
+| **预期输出**               | `expected_output` | `str`                       | 对任务完成后结果的详细描述。                                     |
+| **名称** _(可选)_          | `name`            | `Optional[str]`             | 任务的名称标识符。                                               |
+| **智能体** _(可选)_        | `agent`           | `Optional[BaseAgent]`       | 负责执行任务的智能体。                                           |
+| **工具** _(可选)_          | `tools`           | `List[BaseTool]`            | 智能体在此任务中限制使用的工具/资源。                            |
+| **上下文** _(可选)_        | `context`         | `Optional[List["Task"]]`    | 其他任务的输出将作为此任务的上下文使用。                         |
+| **异步执行** _(可选)_      | `async_execution` | `Optional[bool]`            | 任务是否应异步执行。默认为 False。                               |
+| **人工输入** _(可选)_      | `human_input`     | `Optional[bool]`            | 任务是否应让人工审查智能体的最终答案。默认为 False。             |
+| **Markdown 格式** _(可选)_ | `markdown`        | `Optional[bool]`            | 任务是否应指示智能体以 Markdown 格式返回最终答案。默认为 False。 |
+| **配置** _(可选)_          | `config`          | `Optional[Dict[str, Any]]`  | 任务特定的配置参数。                                             |
+| **输出文件** _(可选)_      | `output_file`     | `Optional[str]`             | 存储任务输出的文件路径。                                         |
+| **输出 JSON** _(可选)_     | `output_json`     | `Optional[Type[BaseModel]]` | 用于结构化 JSON 输出的 Pydantic 模型。                           |
+| **输出 Pydantic** _(可选)_ | `output_pydantic` | `Optional[Type[BaseModel]]` | 任务输出的 Pydantic 模型。                                       |
+| **回调** _(可选)_          | `callback`        | `Optional[Any]`             | 任务完成后执行的函数/对象。                                      |
+
+## 创建任务
+
+在 CrewAI 中有两种创建任务的方式：使用 **YAML 配置（推荐）** 或 **直接在代码中定义**。
+
+### YAML 配置（推荐）
+
+使用 YAML 配置提供了更清洁、更易维护的任务定义方式。我们强烈建议在您的 CrewAI 项目中使用这种方法定义任务。
+
+按照 [安装](/zh-Hans/installation) 部分创建 CrewAI 项目后，导航到 `src/latest_ai_development/config/tasks.yaml` 文件并修改模板以匹配您的特定任务要求。
+
+<Note>
+YAML 文件中的变量（如 `{topic}`）将在运行团队时被输入值替换：
+```python Code
+crew.kickoff(inputs={'topic': 'AI Agents'})
+```
+</Note>
+
+以下是如何使用 YAML 配置任务的示例：
+
+````yaml tasks.yaml
+research_task:
+  description: >
+    对 {topic} 进行深入研究
+    确保您找到任何有趣和相关的信息，
+    当前年份是 2025。
+  expected_output: >
+    关于 {topic} 最相关信息的 10 个要点列表
+  agent: researcher
+
+reporting_task:
+  description: >
+    审查您获得的上下文，并将每个主题扩展为报告的完整部分。
+    确保报告详细并包含所有相关信息。
+  expected_output: >
+    完整的报告，包含主要主题，每个主题都有完整的信息部分。
+    格式化为不带 '```' 的 markdown
+  agent: reporting_analyst
+  markdown: true
+  output_file: report.md
+````
+
+要在代码中使用此 YAML 配置，请创建一个继承自 `CrewBase` 的团队（Crew）类：
+
+```python crew.py
+# src/latest_ai_development/crew.py
+
+from crewai import Agent, Crew, Process, Task
+from crewai.project import CrewBase, agent, crew, task
+from crewai_tools import SerperDevTool
+
+@CrewBase
+class LatestAiDevelopmentCrew():
+  """LatestAiDevelopment crew"""
+
+  @agent
+  def researcher(self) -> Agent:
+    return Agent(
+      config=self.agents_config['researcher'], # type: ignore[index]
+      verbose=True,
+      tools=[SerperDevTool()]
+    )
+
+  @agent
+  def reporting_analyst(self) -> Agent:
+    return Agent(
+      config=self.agents_config['reporting_analyst'], # type: ignore[index]
+      verbose=True
+    )
+
+  @task
+  def research_task(self) -> Task:
+    return Task(
+      config=self.tasks_config['research_task'] # type: ignore[index]
+    )
+
+  @task
+  def reporting_task(self) -> Task:
+    return Task(
+      config=self.tasks_config['reporting_task'] # type: ignore[index]
+    )
+
+  @crew
+  def crew(self) -> Crew:
+    return Crew(
+      agents=[
+        self.researcher(),
+        self.reporting_analyst()
+      ],
+      tasks=[
+        self.research_task(),
+        self.reporting_task()
+      ],
+      process=Process.sequential
+    )
+```
+
+<Note>
+  YAML 文件（`agents.yaml` 和 `tasks.yaml`）中使用的名称应与 Python
+  代码中的方法名称匹配。
+</Note>
+
+### 直接代码定义（替代方案）
+
+或者，您可以直接在代码中定义任务，不使用 YAML 配置：
+
+```python task.py
+from crewai import Task
+
+research_task = Task(
+    description="""
+        对 AI 智能体进行深入研究。
+        确保您找到任何有趣和相关的信息，
+        当前年份是 2025。
+    """,
+    expected_output="""
+        关于 AI 智能体最相关信息的 10 个要点列表
+    """,
+    agent=researcher
+)
+
+reporting_task = Task(
+    description="""
+        审查您获得的上下文，并将每个主题扩展为报告的完整部分。
+        确保报告详细并包含所有相关信息。
+    """,
+    expected_output="""
+        完整的报告，包含主要主题，每个主题都有完整的信息部分。
+    """,
+    agent=reporting_analyst,
+    markdown=True,  # 为最终输出启用 markdown 格式
+    output_file="report.md"
+)
+```
+
+<Tip>
+  直接指定分配的 `agent`，或让 `hierarchical` CrewAI
+  流程根据角色、可用性等决定。
+</Tip>
+
+## 任务输出
+
+理解任务输出对于构建有效的 AI 工作流程至关重要。CrewAI 通过 `TaskOutput` 类提供了一种结构化的方式来处理任务结果，支持多种输出格式，并可以轻松在任务间传递。
+
+CrewAI 框架中任务的输出封装在 `TaskOutput` 类中。此类提供了一种结构化的方式来访问任务结果，包括原始输出、JSON 和 Pydantic 模型等各种格式。
+
+默认情况下，`TaskOutput` 只包含 `raw`（原始）输出。`TaskOutput` 只有在原始 `Task` 对象分别配置了 `output_pydantic` 或 `output_json` 时，才会包含 `pydantic` 或 `json_dict` 输出。
+
+### 任务输出属性
+
+| 属性          | 参数            | 类型                       | 描述                                                       |
+| :------------ | :-------------- | :------------------------- | :--------------------------------------------------------- |
+| **描述**      | `description`   | `str`                      | 任务的描述。                                               |
+| **摘要**      | `summary`       | `Optional[str]`            | 任务摘要，从描述的前 10 个词自动生成。                     |
+| **原始输出**  | `raw`           | `str`                      | 任务的原始输出。这是输出的默认格式。                       |
+| **Pydantic**  | `pydantic`      | `Optional[BaseModel]`      | 表示任务结构化输出的 Pydantic 模型对象。                   |
+| **JSON 字典** | `json_dict`     | `Optional[Dict[str, Any]]` | 表示任务 JSON 输出的字典。                                 |
+| **智能体**    | `agent`         | `str`                      | 执行任务的智能体。                                         |
+| **输出格式**  | `output_format` | `OutputFormat`             | 任务输出格式，选项包括 RAW、JSON 和 Pydantic。默认为 RAW。 |
+
+### 任务方法和属性
+
+| 方法/属性   | 描述                                                                     |
+| :---------- | :----------------------------------------------------------------------- |
+| **json**    | 如果输出格式为 JSON，返回任务输出的 JSON 字符串表示。                    |
+| **to_dict** | 将 JSON 和 Pydantic 输出转换为字典。                                     |
+| **str**     | 返回任务输出的字符串表示，优先顺序为 Pydantic、然后 JSON、然后原始输出。 |
+
+### 访问任务输出
+
+一旦任务执行完毕，可以通过 `Task` 对象的 `output` 属性访问其输出。`TaskOutput` 类提供了与此输出交互和呈现的各种方式。
+
+#### 示例
+
+```python Code
+# 示例任务
+task = Task(
+    description='查找并总结最新的 AI 新闻',
+    expected_output='前 5 个最重要 AI 新闻的要点列表摘要',
+    agent=research_agent,
+    tools=[search_tool]
+)
+
+# 执行团队
+crew = Crew(
+    agents=[research_agent],
+    tasks=[task],
+    verbose=True
+)
+
+result = crew.kickoff()
+
+# 访问任务输出
+task_output = task.output
+
+print(f"任务描述：{task_output.description}")
+print(f"任务摘要：{task_output.summary}")
+print(f"原始输出：{task_output.raw}")
+if task_output.json_dict:
+    print(f"JSON 输出：{json.dumps(task_output.json_dict, indent=2)}")
+if task_output.pydantic:
+    print(f"Pydantic 输出：{task_output.pydantic}")
+```
+
+## Markdown 输出格式化
+
+`markdown` 参数为任务输出启用自动 markdown 格式化。当设置为 `True` 时，任务将指示智能体使用适当的 Markdown 语法格式化最终答案。
+
+### 使用 Markdown 格式化
+
+```python Code
+# 启用 markdown 格式化的示例任务
+formatted_task = Task(
+    description="创建关于 AI 趋势的综合报告",
+    expected_output="具有标题、部分和要点的结构良好的报告",
+    agent=reporter_agent,
+    markdown=True  # 启用自动 markdown 格式化
+)
+```
+
+当 `markdown=True` 时，智能体将收到使用以下格式的额外指令：
+
+- `#` 用于标题
+- `**文本**` 用于粗体文本
+- `*文本*` 用于斜体文本
+- `-` 或 `*` 用于要点
+- `` `代码` `` 用于内联代码
+- ` `语言 ` 用于代码块
+
+### 使用 Markdown 的 YAML 配置
+
+```yaml tasks.yaml
+analysis_task:
+  description: >
+    分析市场数据并创建详细报告
+  expected_output: >
+    包含图表和关键发现的综合分析
+  agent: analyst
+  markdown: true # 启用 markdown 格式化
+  output_file: analysis.md
+```
+
+### Markdown 输出的优势
+
+- **一致的格式化**：确保所有输出遵循适当的 markdown 约定
+- **更好的可读性**：具有标题、列表和强调的结构化内容
+- **文档就绪**：输出可直接用于文档系统
+- **跨平台兼容性**：Markdown 被普遍支持
+
+<Note>
+  当 `markdown=True` 时，markdown
+  格式化指令会自动添加到任务提示中，因此您无需在任务描述中指定格式要求。
+</Note>
+
+## 任务依赖和上下文
+
+任务可以使用 `context` 属性依赖于其他任务的输出。例如：
+
+```python Code
+research_task = Task(
+    description="研究 AI 的最新发展",
+    expected_output="最近 AI 发展的列表",
+    agent=researcher
+)
+
+analysis_task = Task(
+    description="分析研究发现并识别关键趋势",
+    expected_output="AI 趋势的分析报告",
+    agent=analyst,
+    context=[research_task]  # 此任务将等待 research_task 完成
+)
+```
+
+## 任务护栏（Task Guardrails）
+
+任务护栏（Task Guardrails）提供了一种在任务输出传递给下一个任务之前验证和转换的方法。此功能有助于确保数据质量，并在智能体的输出不符合特定标准时提供反馈。
+
+### 使用任务护栏
+
+要为任务添加护栏，通过 `guardrail` 参数提供验证函数：
+
+```python Code
+from typing import Tuple, Union, Dict, Any
+from crewai import TaskOutput
+
+def validate_blog_content(result: TaskOutput) -> Tuple[bool, Any]:
+    """验证博客内容是否符合要求。"""
+    try:
+        # 检查字数
+        word_count = len(result.split())
+        if word_count > 200:
+            return (False, "博客内容超过 200 字")
+
+        # 这里添加其他验证逻辑
+        return (True, result.strip())
+    except Exception as e:
+        return (False, "验证期间发生意外错误")
+
+blog_task = Task(
+    description="写一篇关于 AI 的博客文章",
+    expected_output="少于 200 字的博客文章",
+    agent=blog_agent,
+    guardrail=validate_blog_content  # 添加护栏函数
+)
+```
+
+### 护栏函数要求
+
+1. **函数签名**：
+
+   - 必须接受恰好一个参数（任务输出）
+   - 应返回 `(bool, Any)` 的元组
+   - 建议使用类型提示但不是必需的
+
+2. **返回值**：
+   - 成功时：返回 `(bool, Any)` 的元组。例如：`(True, validated_result)`
+   - 失败时：返回 `(bool, str)` 的元组。例如：`(False, "解释失败的错误消息")`
+
+任务护栏是确保 AI 工作流中数据质量和可靠性的强大工具，为复杂任务链提供额外的验证层。

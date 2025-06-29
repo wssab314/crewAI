@@ -1,0 +1,529 @@
+---
+title: 智能体（Agents）
+description: 在 CrewAI 框架中创建和管理智能体的详细指南。
+icon: robot
+---
+
+## 智能体概述
+
+在 CrewAI 框架中，`智能体（Agent）` 是一个能够：
+
+- 执行特定任务
+- 基于角色和目标做出决策
+- 使用工具（Tools）完成目标
+- 与其他智能体沟通和协作
+- 保持交互记忆
+- 在允许的情况下委派任务
+
+的自主单元。
+
+<Tip>
+  将智能体想象成具有特定技能、专业知识和职责的专业团队成员。例如，`研究员（Researcher）`
+  智能体可能擅长收集和分析信息，而 `写作者（Writer）` 智能体可能更擅长创建内容。
+</Tip>
+
+<Note type="info" title="企业版增强功能：可视化智能体构建器">
+CrewAI 企业版包含可视化智能体构建器，无需编写代码即可简化智能体创建和配置。可视化设计您的智能体并实时测试它们。
+
+![可视化智能体构建器截图](/images/enterprise/crew-studio-interface.png)
+
+可视化智能体构建器提供：
+
+- 基于表单界面的直观智能体配置
+- 实时测试和验证
+- 预配置智能体类型的模板库
+- 智能体属性和行为的简单自定义
+  </Note>
+
+## 智能体属性
+
+| 属性                          | 参数                     | 类型                                  | 描述                                                                            |
+| :---------------------------- | :----------------------- | :------------------------------------ | :------------------------------------------------------------------------------ |
+| **角色**                      | `role`                   | `str`                                 | 定义智能体在团队中的功能和专业知识。                                            |
+| **目标**                      | `goal`                   | `str`                                 | 指导智能体决策的个人目标。                                                      |
+| **背景故事**                  | `backstory`              | `str`                                 | 为智能体提供上下文和个性，丰富交互体验。                                        |
+| **LLM** _(可选)_              | `llm`                    | `Union[str, LLM, Any]`                | 为智能体提供动力的语言模型。默认为 `OPENAI_MODEL_NAME` 中指定的模型或 "gpt-4"。 |
+| **工具** _(可选)_             | `tools`                  | `List[BaseTool]`                      | 智能体可用的功能或函数。默认为空列表。                                          |
+| **函数调用 LLM** _(可选)_     | `function_calling_llm`   | `Optional[Any]`                       | 用于工具调用的语言模型，如果指定则覆盖团队的 LLM。                              |
+| **最大迭代次数** _(可选)_     | `max_iter`               | `int`                                 | 智能体必须提供最佳答案前的最大迭代次数。默认为 20。                             |
+| **最大 RPM** _(可选)_         | `max_rpm`                | `Optional[int]`                       | 避免速率限制的每分钟最大请求数。                                                |
+| **最大执行时间** _(可选)_     | `max_execution_time`     | `Optional[int]`                       | 任务执行的最大时间（秒）。                                                      |
+| **详细输出** _(可选)_         | `verbose`                | `bool`                                | 启用详细执行日志以供调试。默认为 False。                                        |
+| **允许委派** _(可选)_         | `allow_delegation`       | `bool`                                | 允许智能体将任务委派给其他智能体。默认为 False。                                |
+| **步骤回调** _(可选)_         | `step_callback`          | `Optional[Any]`                       | 每个智能体步骤后调用的函数，覆盖团队回调。                                      |
+| **缓存** _(可选)_             | `cache`                  | `bool`                                | 启用工具使用缓存。默认为 True。                                                 |
+| **系统模板** _(可选)_         | `system_template`        | `Optional[str]`                       | 智能体的自定义系统提示模板。                                                    |
+| **提示模板** _(可选)_         | `prompt_template`        | `Optional[str]`                       | 智能体的自定义提示模板。                                                        |
+| **响应模板** _(可选)_         | `response_template`      | `Optional[str]`                       | 智能体的自定义响应模板。                                                        |
+| **允许代码执行** _(可选)_     | `allow_code_execution`   | `Optional[bool]`                      | 启用智能体的代码执行。默认为 False。                                            |
+| **最大重试限制** _(可选)_     | `max_retry_limit`        | `int`                                 | 发生错误时的最大重试次数。默认为 2。                                            |
+| **尊重上下文窗口** _(可选)_   | `respect_context_window` | `bool`                                | 通过摘要保持消息在上下文窗口大小内。默认为 True。                               |
+| **代码执行模式** _(可选)_     | `code_execution_mode`    | `Literal["safe", "unsafe"]`           | 代码执行模式：'safe'（使用 Docker）或 'unsafe'（直接执行）。默认为 'safe'。     |
+| **多模态** _(可选)_           | `multimodal`             | `bool`                                | 智能体是否支持多模态功能。默认为 False。                                        |
+| **注入日期** _(可选)_         | `inject_date`            | `bool`                                | 是否自动将当前日期注入任务。默认为 False。                                      |
+| **日期格式** _(可选)_         | `date_format`            | `str`                                 | 启用 inject_date 时的日期格式字符串。默认为 "%Y-%m-%d"（ISO 格式）。            |
+| **推理** _(可选)_             | `reasoning`              | `bool`                                | 智能体在执行任务前是否应该反思并创建计划。默认为 False。                        |
+| **最大推理尝试次数** _(可选)_ | `max_reasoning_attempts` | `Optional[int]`                       | 执行任务前的最大推理尝试次数。如果为 None，将尝试直到准备就绪。                 |
+| **嵌入器** _(可选)_           | `embedder`               | `Optional[Dict[str, Any]]`            | 智能体使用的嵌入器配置。                                                        |
+| **知识源** _(可选)_           | `knowledge_sources`      | `Optional[List[BaseKnowledgeSource]]` | 智能体可用的知识源。                                                            |
+| **使用系统提示** _(可选)_     | `use_system_prompt`      | `Optional[bool]`                      | 是否使用系统提示（支持 o1 模型）。默认为 True。                                 |
+
+## 创建智能体
+
+在 CrewAI 中有两种创建智能体的方式：使用 **YAML 配置（推荐）** 或 **直接在代码中定义**。
+
+### YAML 配置（推荐）
+
+使用 YAML 配置提供了更清洁、更易维护的智能体定义方式。我们强烈建议在您的 CrewAI 项目中使用这种方法。
+
+按照 [安装](/zh-Hans/installation) 部分创建 CrewAI 项目后，导航到 `src/latest_ai_development/config/agents.yaml` 文件并修改模板以匹配您的要求。
+
+<Note>
+YAML 文件中的变量（如 `{topic}`）将在运行团队时被输入值替换：
+```python Code
+crew.kickoff(inputs={'topic': 'AI Agents'})
+```
+</Note>
+
+以下是如何使用 YAML 配置智能体的示例：
+
+```yaml agents.yaml
+# src/latest_ai_development/config/agents.yaml
+researcher:
+  role: >
+    {topic} 高级数据研究员
+  goal: >
+    发现 {topic} 的前沿发展
+  backstory: >
+    您是一位经验丰富的研究员，善于发现 {topic} 的最新发展。以能够找到最相关的信息并以清晰简洁的方式呈现而闻名。
+
+reporting_analyst:
+  role: >
+    {topic} 报告分析师
+  goal: >
+    基于 {topic} 数据分析和研究发现创建详细报告
+  backstory: >
+    您是一位细致入微的分析师，具有敏锐的细节观察力。以能够将复杂数据转化为清晰简洁的报告而闻名，使他人易于理解和采取行动。
+```
+
+要在代码中使用此 YAML 配置，请创建一个继承自 `CrewBase` 的团队（Crew）类：
+
+```python Code
+# src/latest_ai_development/crew.py
+from crewai import Agent, Crew, Process
+from crewai.project import CrewBase, agent, crew
+from crewai_tools import SerperDevTool
+
+@CrewBase
+class LatestAiDevelopmentCrew():
+  """LatestAiDevelopment crew"""
+
+  agents_config = "config/agents.yaml"
+
+  @agent
+  def researcher(self) -> Agent:
+    return Agent(
+      config=self.agents_config['researcher'], # type: ignore[index]
+      verbose=True,
+      tools=[SerperDevTool()]
+    )
+
+  @agent
+  def reporting_analyst(self) -> Agent:
+    return Agent(
+      config=self.agents_config['reporting_analyst'], # type: ignore[index]
+      verbose=True
+    )
+```
+
+<Note>
+  YAML 文件（`agents.yaml`）中使用的名称应与 Python 代码中的方法名称匹配。
+</Note>
+
+### 直接代码定义
+
+您可以通过实例化 `Agent` 类直接在代码中创建智能体。以下是显示所有可用参数的综合示例：
+
+```python Code
+from crewai import Agent
+from crewai_tools import SerperDevTool
+
+# 创建包含所有可用参数的智能体
+agent = Agent(
+    role="高级数据科学家",
+    goal="分析和解释复杂数据集以提供可操作的见解",
+    backstory="拥有超过 10 年数据科学和机器学习经验，"
+              "您擅长在复杂数据集中找到模式。",
+    llm="gpt-4",  # 默认：OPENAI_MODEL_NAME 或 "gpt-4"
+    function_calling_llm=None,  # 可选：用于工具调用的独立 LLM
+    verbose=False,  # 默认：False
+    allow_delegation=False,  # 默认：False
+    max_iter=20,  # 默认：20 次迭代
+    max_rpm=None,  # 可选：API 调用的速率限制
+    max_execution_time=None,  # 可选：最大执行时间（秒）
+    max_retry_limit=2,  # 默认：错误时重试 2 次
+    allow_code_execution=False,  # 默认：False
+    code_execution_mode="safe",  # 默认："safe"（选项："safe", "unsafe"）
+    respect_context_window=True,  # 默认：True
+    use_system_prompt=True,  # 默认：True
+    multimodal=False,  # 默认：False
+    inject_date=False,  # 默认：False
+    date_format="%Y-%m-%d",  # 默认：ISO 格式
+    reasoning=False,  # 默认：False
+    max_reasoning_attempts=None,  # 默认：None
+    tools=[SerperDevTool()],  # 可选：工具列表
+    knowledge_sources=None,  # 可选：知识源列表
+    embedder=None,  # 可选：自定义嵌入器配置
+    system_template=None,  # 可选：自定义系统提示模板
+    prompt_template=None,  # 可选：自定义提示模板
+    response_template=None,  # 可选：自定义响应模板
+    step_callback=None,  # 可选：监控回调函数
+)
+```
+
+让我们分解一些常见用例的关键参数组合：
+
+#### 基础研究智能体
+
+```python Code
+research_agent = Agent(
+    role="研究分析师",
+    goal="查找并总结特定主题的信息",
+    backstory="您是一位注重细节的经验丰富的研究员",
+    tools=[SerperDevTool()],
+    verbose=True  # 启用日志记录以供调试
+)
+```
+
+#### 代码开发智能体
+
+```python Code
+dev_agent = Agent(
+    role="高级 Python 开发者",
+    goal="编写和调试 Python 代码",
+    backstory="您是一位拥有 8 年经验的 Python 专家，专门从事清洁、高效的代码开发",
+    allow_code_execution=True,
+    code_execution_mode="safe",  # 在 Docker 中安全执行代码
+    max_execution_time=300,  # 5 分钟超时
+    verbose=True
+)
+```
+
+<Note>将代码解释器工具作为智能体的工具参数添加。</Note>
+
+#### 高级功能
+
+- `multimodal`：启用处理文本和视觉内容的多模态功能
+- `reasoning`：使智能体在执行任务前能够反思和创建计划
+- `inject_date`：自动将当前日期注入任务描述
+
+#### 模板
+
+- `system_template`：定义智能体的核心行为
+- `prompt_template`：构建输入格式
+- `response_template`：格式化智能体响应
+
+<Note>
+  使用自定义模板时，确保同时定义 `system_template` 和
+  `prompt_template`。`response_template` 是可选的，但建议用于一致的输出格式。
+</Note>
+
+<Note>
+  使用自定义模板时，您可以在模板中使用 `{role}`、`{goal}` 和 `{backstory}`
+  等变量。这些将在执行期间自动填充。
+</Note>
+
+## 智能体工具
+
+智能体可以配备各种工具（Tools）来增强其功能。CrewAI 支持来自以下来源的工具：
+
+- [CrewAI 工具包](https://github.com/joaomdmoura/crewai-tools)
+- [LangChain 工具](https://python.langchain.com/docs/integrations/tools)
+
+以下是如何向智能体添加工具：
+
+```python Code
+from crewai import Agent
+from crewai_tools import SerperDevTool, WikipediaTools
+
+# 创建工具
+search_tool = SerperDevTool()
+wiki_tool = WikipediaTools()
+
+# 向智能体添加工具
+researcher = Agent(
+    role="AI 技术研究员",
+    goal="研究最新的 AI 发展",
+    tools=[search_tool, wiki_tool],
+    verbose=True
+)
+```
+
+## 智能体记忆和上下文
+
+智能体可以保持其交互记忆并使用先前任务的上下文。这对于需要跨多个任务保留信息的复杂工作流程特别有用。
+
+```python Code
+from crewai import Agent
+
+analyst = Agent(
+    role="数据分析师",
+    goal="分析并记住复杂的数据模式",
+    memory=True,  # 启用记忆
+    verbose=True
+)
+```
+
+<Note>
+  启用 `memory`
+  时，智能体将在多次交互中保持上下文，提高其处理复杂、多步骤任务的能力。
+</Note>
+
+## 上下文窗口管理
+
+CrewAI 包含复杂的自动上下文窗口管理（Context Window Management），用于处理对话超过语言模型令牌限制的情况。这个强大的功能由 `respect_context_window` 参数控制。
+
+### 上下文窗口管理的工作原理
+
+当智能体的对话历史对于 LLM 的上下文窗口来说过大时，CrewAI 会自动检测这种情况并可以：
+
+1. **自动摘要内容**（当 `respect_context_window=True` 时）
+2. **停止执行并报错**（当 `respect_context_window=False` 时）
+
+### 自动上下文处理（`respect_context_window=True`）
+
+这是大多数用例的**默认和推荐设置**。启用时，CrewAI 将：
+
+```python Code
+# 具有自动上下文管理的智能体（默认）
+smart_agent = Agent(
+    role="研究分析师",
+    goal="分析大型文档和数据集",
+    backstory="处理大量信息的专家",
+    respect_context_window=True,  # 🔑 默认：自动处理上下文限制
+    verbose=True
+)
+```
+
+**当超过上下文限制时会发生什么：**
+
+- ⚠️ **警告消息**：`"上下文长度超出。正在摘要内容以适应模型上下文窗口。"`
+- 🔄 **自动摘要**：CrewAI 智能地摘要对话历史
+- ✅ **继续执行**：任务执行在摘要上下文下无缝继续
+- 📝 **保留信息**：关键信息被保留，同时减少令牌数量
+
+### 严格上下文限制（`respect_context_window=False`）
+
+当您需要精确控制并希望执行停止而不是丢失任何信息时：
+
+```python Code
+# 具有严格上下文限制的智能体
+strict_agent = Agent(
+    role="法律文档审查员",
+    goal="提供精确的法律分析而不丢失信息",
+    backstory="需要完整上下文进行准确分析的法律专家",
+    respect_context_window=False,  # ❌ 在上下文限制时停止执行
+    verbose=True
+)
+```
+
+**当超过上下文限制时会发生什么：**
+
+- ❌ **错误消息**：`"上下文长度超出。考虑使用更小的文本或来自 crewai_tools 的 RAG 工具。"`
+- 🛑 **执行停止**：任务执行立即停止
+- 🔧 **需要手动干预**：您需要修改您的方法
+
+### 选择正确的设置
+
+#### 使用 `respect_context_window=True`（默认）当：
+
+- **处理可能超过上下文限制的大型文档**
+- **长时间对话**，其中一些摘要是可接受的
+- **研究任务**，其中一般上下文比确切细节更重要
+- **原型设计和开发**，您希望稳健的执行
+
+```python Code
+# 适合文档处理
+document_processor = Agent(
+    role="文档分析师",
+    goal="从大型研究论文中提取见解",
+    backstory="分析大量文档的专家",
+    respect_context_window=True,  # 优雅地处理大型文档
+    max_iter=50,  # 允许更多迭代进行复杂分析
+    verbose=True
+)
+```
+
+#### 使用 `respect_context_window=False` 当：
+
+- **精确性至关重要**且信息丢失是不可接受的
+- **法律或医疗任务**需要完整上下文
+- **代码审查**，其中遗漏细节可能引入错误
+- **财务分析**，其中准确性至关重要
+
+```python Code
+# 适合精确任务
+precision_agent = Agent(
+    role="代码安全审计员",
+    goal="识别代码中的安全漏洞",
+    backstory="需要完整代码上下文的安全专家",
+    respect_context_window=False,  # 宁可失败也不进行不完整分析
+    max_retry_limit=1,  # 在上下文问题上快速失败
+    verbose=True
+)
+```
+
+### 处理大数据的替代方法
+
+处理非常大的数据集时，考虑这些策略：
+
+#### 1. 使用 RAG 工具
+
+```python Code
+from crewai_tools import RagTool
+
+# 为大型文档处理创建 RAG 工具
+rag_tool = RagTool()
+
+rag_agent = Agent(
+    role="研究助理",
+    goal="高效查询大型知识库",
+    backstory="使用 RAG 工具进行信息检索的专家",
+    tools=[rag_tool],  # 使用 RAG 而不是大上下文窗口
+    respect_context_window=True,
+    verbose=True
+)
+```
+
+#### 2. 使用知识源
+
+```python Code
+# 使用知识源而不是大提示
+knowledge_agent = Agent(
+    role="知识专家",
+    goal="使用精选知识回答问题",
+    backstory="利用结构化知识源的专家",
+    knowledge_sources=[your_knowledge_sources],  # 预处理的知识
+    respect_context_window=True,
+    verbose=True
+)
+```
+
+### 上下文窗口最佳实践
+
+1. **监控上下文使用**：启用 `verbose=True` 以查看上下文管理的实际操作
+2. **高效设计**：构建任务以最小化上下文积累
+3. **使用适当的模型**：选择具有适合您任务的上下文窗口的 LLM
+4. **测试两种设置**：尝试 `True` 和 `False` 看看哪个更适合您的用例
+5. **与 RAG 结合**：对非常大的数据集使用 RAG 工具而不是仅依赖上下文窗口
+
+### 上下文问题故障排除
+
+**如果您遇到上下文限制错误：**
+
+```python Code
+# 快速修复：启用自动处理
+agent.respect_context_window = True
+
+# 更好的解决方案：对大数据使用 RAG 工具
+from crewai_tools import RagTool
+agent.tools = [RagTool()]
+
+# 替代方案：将任务分解成更小的部分
+# 或使用知识源而不是大提示
+```
+
+**如果自动摘要丢失重要信息：**
+
+```python Code
+# 禁用自动摘要并使用 RAG
+agent = Agent(
+    role="详细分析师",
+    goal="保持完整信息准确性",
+    backstory="需要完整上下文的专家",
+    respect_context_window=False,  # 无摘要
+    tools=[RagTool()],  # 对大数据使用 RAG
+    verbose=True
+)
+```
+
+<Note>
+  上下文窗口管理功能在后台自动工作。您无需调用任何特殊函数 - 只需将
+  `respect_context_window` 设置为您首选的行为，CrewAI 会处理其余部分！
+</Note>
+
+## 重要注意事项和最佳实践
+
+### 安全和代码执行
+
+- 使用 `allow_code_execution` 时，要谨慎对待用户输入并始终验证它
+- 在生产环境中使用 `code_execution_mode: "safe"`（Docker）
+- 考虑设置适当的 `max_execution_time` 限制以防止无限循环
+
+### 性能优化
+
+- 使用 `respect_context_window: true` 防止令牌限制问题
+- 设置适当的 `max_rpm` 以避免速率限制
+- 启用 `cache: true` 以提高重复任务的性能
+- 根据任务复杂性调整 `max_iter` 和 `max_retry_limit`
+
+### 记忆和上下文管理
+
+- 利用 `knowledge_sources` 获取特定领域信息
+- 使用自定义嵌入模型时配置 `embedder`
+- 使用自定义模板（`system_template`、`prompt_template`、`response_template`）对智能体行为进行细粒度控制
+
+### 高级功能
+
+- 对需要在执行复杂任务前计划和反思的智能体启用 `reasoning: true`
+- 设置适当的 `max_reasoning_attempts` 来控制计划迭代（None 表示无限制尝试）
+- 对需要当前日期感知的时间敏感任务使用 `inject_date: true`
+- 使用标准 Python datetime 格式代码通过 `date_format` 自定义日期格式
+- 对需要处理文本和视觉内容的智能体启用 `multimodal: true`
+
+### 智能体协作
+
+- 当智能体需要协同工作时启用 `allow_delegation: true`
+- 使用 `step_callback` 监控和记录智能体交互
+- 考虑为不同目的使用不同的 LLM：
+  - 主要 `llm` 用于复杂推理
+  - `function_calling_llm` 用于高效工具使用
+
+### 日期感知和推理
+
+- 对时间敏感任务使用 `inject_date: true` 为智能体提供当前日期感知
+- 使用标准 Python datetime 格式代码通过 `date_format` 自定义日期格式
+- 有效格式代码包括：%Y（年）、%m（月）、%d（日）、%B（完整月份名称）等
+- 无效的日期格式将记录为警告，不会修改任务描述
+- 对受益于前期计划和反思的复杂任务启用 `reasoning: true`
+
+### 模型兼容性
+
+- 对不支持系统消息的旧模型设置 `use_system_prompt: false`
+- 确保您选择的 `llm` 支持您需要的功能（如函数调用）
+
+## 常见问题故障排除
+
+1. **速率限制**：如果遇到 API 速率限制：
+
+   - 实施适当的 `max_rpm`
+   - 对重复操作使用缓存
+   - 考虑批处理请求
+
+2. **上下文窗口错误**：如果超过上下文限制：
+
+   - 启用 `respect_context_window`
+   - 使用更高效的提示
+   - 定期清除智能体记忆
+
+3. **代码执行问题**：如果代码执行失败：
+
+   - 验证安全模式下已安装 Docker
+   - 检查执行权限
+   - 审查代码沙箱设置
+
+4. **记忆问题**：如果智能体响应似乎不一致：
+   - 检查知识源配置
+   - 审查对话历史管理
+
+记住，智能体在根据其特定用例配置时最有效。花时间了解您的需求并相应调整这些参数。

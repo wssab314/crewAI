@@ -1,0 +1,190 @@
+---
+title: 指纹识别
+description: 学习如何使用 CrewAI 的指纹识别系统来唯一标识和跟踪组件的整个生命周期。
+icon: fingerprint
+---
+
+## 概述
+
+CrewAI 中的指纹提供了一种在整个生命周期中唯一标识和跟踪组件的方法。每个 `Agent`、`Crew` 和 `Task` 在创建时都会自动获得一个唯一的指纹，这不能手动覆盖。
+
+这些指纹可用于：
+- 审计和跟踪组件使用情况
+- 确保组件身份完整性
+- 将元数据附加到组件
+- 创建可追踪的操作链
+
+## 指纹如何工作
+
+指纹是来自 `crewai.security` 模块的 `Fingerprint` 类的实例。每个指纹包含：
+
+- UUID 字符串：组件的唯一标识符，自动生成且不能手动设置
+- 创建时间戳：指纹生成的时间，自动设置且不能手动修改
+- 元数据：可以自定义的附加信息字典
+
+指纹在创建组件时自动生成和分配。每个组件通过只读属性公开其指纹。
+
+## 基本用法
+
+### 访问指纹
+
+```python
+from crewai import Agent, Crew, Task
+
+# 创建组件 - 指纹自动生成
+agent = Agent(
+    role="数据科学家",
+    goal="分析数据",
+    backstory="数据分析专家"
+)
+
+crew = Crew(
+    agents=[agent],
+    tasks=[]
+)
+
+task = Task(
+    description="分析客户数据",
+    expected_output="数据分析的洞察",
+    agent=agent
+)
+
+# 访问指纹
+agent_fingerprint = agent.fingerprint
+crew_fingerprint = crew.fingerprint
+task_fingerprint = task.fingerprint
+
+# 打印 UUID 字符串
+print(f"代理指纹：{agent_fingerprint.uuid_str}")
+print(f"团队指纹：{crew_fingerprint.uuid_str}")
+print(f"任务指纹：{task_fingerprint.uuid_str}")
+```
+
+### 使用指纹元数据
+
+你可以向指纹添加元数据以获得额外的上下文：
+
+```python
+# 向代理的指纹添加元数据
+agent.security_config.fingerprint.metadata = {
+    "version": "1.0",
+    "department": "数据科学部",
+    "project": "客户分析"
+}
+
+# 访问元数据
+print(f"代理元数据：{agent.fingerprint.metadata}")
+```
+
+## 指纹持久性
+
+指纹设计为在组件的整个生命周期中保持不变。如果你修改组件，指纹保持相同：
+
+```python
+original_fingerprint = agent.fingerprint.uuid_str
+
+# 修改代理
+agent.goal = "分析的新目标"
+
+# 指纹保持不变
+assert agent.fingerprint.uuid_str == original_fingerprint
+```
+
+## 确定性指纹
+
+虽然你不能直接设置 UUID 和创建时间戳，但你可以使用带有种子的 `generate` 方法创建确定性指纹：
+
+```python
+from crewai.security import Fingerprint
+
+# 使用种子字符串创建确定性指纹
+deterministic_fingerprint = Fingerprint.generate(seed="my-agent-id")
+
+# 相同的种子总是产生相同的指纹
+same_fingerprint = Fingerprint.generate(seed="my-agent-id")
+assert deterministic_fingerprint.uuid_str == same_fingerprint.uuid_str
+
+# 你也可以设置元数据
+custom_fingerprint = Fingerprint.generate(
+    seed="my-agent-id",
+    metadata={"version": "1.0"}
+)
+```
+
+## 高级用法
+
+### 指纹结构
+
+每个指纹具有以下结构：
+
+```python
+from crewai.security import Fingerprint
+
+fingerprint = agent.fingerprint
+
+# UUID 字符串 - 唯一标识符（自动生成）
+uuid_str = fingerprint.uuid_str  # 例如："123e4567-e89b-12d3-a456-426614174000"
+
+# 创建时间戳（自动生成）
+created_at = fingerprint.created_at  # 一个 datetime 对象
+
+# 元数据 - 用于附加信息（可以自定义）
+metadata = fingerprint.metadata  # 一个字典，默认为 {}
+```
+
+## 使用场景
+
+### 审计和追踪
+```python
+# 记录组件创建和使用
+def log_component_usage(component):
+    fingerprint = component.fingerprint
+    print(f"组件 {fingerprint.uuid_str} 在 {fingerprint.created_at} 创建")
+    if fingerprint.metadata:
+        print(f"元数据：{fingerprint.metadata}")
+
+# 使用示例
+log_component_usage(agent)
+log_component_usage(crew)
+log_component_usage(task)
+```
+
+### 组件身份验证
+```python
+# 验证组件身份
+def verify_component_identity(component, expected_fingerprint):
+    return component.fingerprint.uuid_str == expected_fingerprint
+
+# 存储期望的指纹
+expected_agent_fingerprint = agent.fingerprint.uuid_str
+
+# 稍后验证
+is_valid = verify_component_identity(agent, expected_agent_fingerprint)
+print(f"代理身份验证：{is_valid}")
+```
+
+### 元数据管理
+```python
+# 为组件添加丰富的元数据
+agent.security_config.fingerprint.metadata.update({
+    "created_by": "用户123",
+    "environment": "生产环境",
+    "tags": ["数据分析", "机器学习"],
+    "last_modified": "2024-01-15"
+})
+
+# 查询元数据
+metadata = agent.fingerprint.metadata
+if "数据分析" in metadata.get("tags", []):
+    print("这是一个数据分析代理")
+```
+
+## 最佳实践
+
+1. **保持元数据结构一致** - 为同类型的组件使用相同的元数据结构
+2. **记录重要事件** - 使用指纹来跟踪组件的重要生命周期事件
+3. **避免敏感信息** - 不要在元数据中存储敏感信息
+4. **定期清理** - 定期清理不再需要的元数据
+5. **文档化用法** - 记录你的指纹使用模式和约定
+
+通过有效使用指纹识别系统，你可以建立强大的组件追踪、审计和管理机制，提高系统的可观测性和可维护性。

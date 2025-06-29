@@ -1,0 +1,404 @@
+---
+title: 流程（Flows）
+description: 学习如何使用 CrewAI Flows 创建和管理 AI 工作流。
+icon: arrow-progress
+---
+
+## 概述
+
+CrewAI 流程（Flows）是一个强大的功能，旨在简化 AI 工作流的创建和管理。流程允许开发人员高效地组合和协调编码任务和团队（Crews），为构建复杂的 AI 自动化提供了一个健壮的框架。
+
+流程（Flows）允许您创建结构化的、事件驱动的工作流。它们提供了一种无缝的方式来连接多个任务，管理状态，并控制您的 AI 应用程序的执行流程。使用流程，您可以轻松设计和实现多步骤过程，充分利用 CrewAI 的全部功能。
+
+1. **简化的工作流创建**：轻松地将多个团队（Crews）和任务（Tasks）链接在一起，创建复杂的 AI 工作流。
+
+2. **状态管理**：流程使在工作流中的不同任务之间管理和共享状态变得非常容易。
+
+3. **事件驱动架构**：基于事件驱动模型构建，允许动态和响应式的工作流。
+
+4. **灵活的控制流**：在您的工作流中实现条件逻辑、循环和分支。
+
+## 开始使用
+
+让我们创建一个简单的流程（Flow），您将在一个任务中使用 OpenAI 生成一个随机城市，然后在另一个任务中使用该城市生成一个有趣的事实。
+
+```python Code
+
+from crewai.flow.flow import Flow, listen, start
+from dotenv import load_dotenv
+from litellm import completion
+
+
+class ExampleFlow(Flow):
+    model = "gpt-4o-mini"
+
+    @start()
+    def generate_city(self):
+        print("启动流程")
+        # 每个流程状态自动获得一个唯一的 ID
+        print(f"流程状态 ID: {self.state['id']}")
+
+        response = completion(
+            model=self.model,
+            messages=[
+                {
+                    "role": "user",
+                    "content": "返回世界上的一个随机城市名称。",
+                },
+            ],
+        )
+
+        random_city = response["choices"][0]["message"]["content"]
+        # 将城市存储在我们的状态中
+        self.state["city"] = random_city
+        print(f"随机城市: {random_city}")
+
+        return random_city
+
+    @listen(generate_city)
+    def generate_fun_fact(self, random_city):
+        response = completion(
+            model=self.model,
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"告诉我一个关于 {random_city} 的有趣事实",
+                },
+            ],
+        )
+
+        fun_fact = response["choices"][0]["message"]["content"]
+        # 将有趣的事实存储在我们的状态中
+        self.state["fun_fact"] = fun_fact
+        return fun_fact
+
+
+
+flow = ExampleFlow()
+flow.plot()
+result = flow.kickoff()
+
+print(f"生成的有趣事实: {result}")
+```
+
+![流程可视化图片](/images/crewai-flow-1.png)
+在上面的示例中，我们创建了一个简单的流程，使用 OpenAI 生成一个随机城市，然后生成一个关于该城市的有趣事实。该流程包括两个任务：`generate_city` 和 `generate_fun_fact`。`generate_city` 任务是流程的起点，`generate_fun_fact` 任务监听 `generate_city` 任务的输出。
+
+每个流程实例自动在其状态中接收一个唯一标识符（UUID），这有助于跟踪和管理流程执行。状态还可以存储在整个流程执行过程中持续存在的附加数据（如生成的城市和有趣的事实）。
+
+当您运行流程时，它将：
+
+1. 为流程状态生成一个唯一的 ID
+2. 生成一个随机城市并将其存储在状态中
+3. 生成一个关于该城市的有趣事实并将其存储在状态中
+4. 将结果打印到控制台
+
+状态的唯一 ID 和存储的数据可用于跟踪流程执行和在任务之间维护上下文。
+
+**注意：** 确保您已设置 `.env` 文件以存储您的 `OPENAI_API_KEY`。此密钥对于向 OpenAI API 进行请求认证是必需的。
+
+### @start()
+
+`@start()` 装饰器用于将方法标记为流程（Flow）的起点。当流程启动时，所有用 `@start()` 装饰的方法将并行执行。您可以在一个流程中有多个启动方法，它们在流程启动时都会被执行。
+
+### @listen()
+
+`@listen()` 装饰器用于将方法标记为流程中另一个任务输出的监听器。用 `@listen()` 装饰的方法将在指定任务发出输出时执行。该方法可以访问它正在监听的任务的输出作为参数。
+
+#### 用法
+
+`@listen()` 装饰器可以有多种用法：
+
+1. **按名称监听方法**：您可以将要监听的方法名称作为字符串传递。当该方法完成时，监听器方法将被触发。
+
+   ```python Code
+   @listen("generate_city")
+   def generate_fun_fact(self, random_city):
+       # 实现
+   ```
+
+2. **直接监听方法**：您可以直接传递方法本身。当该方法完成时，监听器方法将被触发。
+   ```python Code
+   @listen(generate_city)
+   def generate_fun_fact(self, random_city):
+       # 实现
+   ```
+
+### 流程输出
+
+访问和处理流程（Flow）的输出对于将您的 AI 工作流集成到更大的应用程序或系统中至关重要。CrewAI 流程提供了直接的机制来检索最终输出、访问中间结果和管理流程的整体状态。
+
+#### 检索最终输出
+
+当您运行流程时，最终输出由最后一个完成的方法确定。`kickoff()` 方法返回此最终方法的输出。
+
+以下是您如何访问最终输出：
+
+<CodeGroup>
+```python Code
+from crewai.flow.flow import Flow, listen, start
+
+class OutputExampleFlow(Flow):
+@start()
+def first_method(self):
+return "来自 first_method 的输出"
+
+    @listen(first_method)
+    def second_method(self, first_output):
+        return f"第二个方法接收到：{first_output}"
+
+flow = OutputExampleFlow()
+flow.plot("my_flow_plot")
+final_output = flow.kickoff()
+
+print("---- 最终输出 ----")
+print(final_output)
+
+````
+
+```text Output
+---- 最终输出 ----
+第二个方法接收到：来自 first_method 的输出
+````
+
+</CodeGroup>
+![流程可视化图片](/images/crewai-flow-2.png)
+
+在此示例中，`second_method` 是最后一个完成的方法，因此其输出将是流程的最终输出。
+`kickoff()` 方法将返回最终输出，然后打印到控制台。`plot()` 方法将生成 HTML 文件，帮助您理解流程。
+
+#### 访问和更新状态
+
+除了检索最终输出，您还可以在流程中访问和更新状态。状态可用于在流程中的不同方法之间存储和共享数据。流程运行后，您可以访问状态以检索在执行期间添加或更新的任何信息。
+
+以下是如何更新和访问状态的示例：
+
+<CodeGroup>
+
+```python Code
+from crewai.flow.flow import Flow, listen, start
+from pydantic import BaseModel
+
+class ExampleState(BaseModel):
+    counter: int = 0
+    message: str = ""
+
+class StateExampleFlow(Flow[ExampleState]):
+
+    @start()
+    def first_method(self):
+        self.state.message = "来自 first_method 的问候"
+        self.state.counter += 1
+
+    @listen(first_method)
+    def second_method(self):
+        self.state.message += " - 由 second_method 更新"
+        self.state.counter += 1
+        return self.state.message
+
+flow = StateExampleFlow()
+flow.plot("my_flow_plot")
+final_output = flow.kickoff()
+print(f"最终输出: {final_output}")
+print("最终状态:")
+print(flow.state)
+```
+
+```text Output
+最终输出: 来自 first_method 的问候 - 由 second_method 更新
+最终状态:
+counter=2 message='来自 first_method 的问候 - 由 second_method 更新'
+```
+
+</CodeGroup>
+
+![流程可视化图片](/images/crewai-flow-2.png)
+
+在此示例中，状态由 `first_method` 和 `second_method` 更新。
+流程运行后，您可以访问最终状态以查看这些方法所做的更新。
+
+通过确保返回最终方法的输出并提供对状态的访问，CrewAI 流程使将 AI 工作流的结果集成到更大的应用程序或系统中变得容易，
+同时在整个流程的执行过程中维护和访问状态。
+
+## 流程状态管理
+
+有效地管理状态对于构建可靠和可维护的 AI 工作流至关重要。CrewAI 流程为非结构化和结构化状态管理提供了强大的机制，
+允许开发人员选择最适合其应用程序需求的方法。
+
+### 非结构化状态管理
+
+在非结构化状态管理中，所有状态都存储在 `Flow` 类的 `state` 属性中。
+这种方法提供了灵活性，使开发人员能够动态添加或修改状态属性，而无需定义严格的模式。
+即使使用非结构化状态，CrewAI 流程也会自动为每个状态实例生成和维护一个唯一标识符（UUID）。
+
+```python Code
+from crewai.flow.flow import Flow, listen, start
+
+class UnstructuredExampleFlow(Flow):
+
+    @start()
+    def first_method(self):
+        # 状态自动包含 'id' 字段
+        print(f"状态 ID: {self.state['id']}")
+        self.state['counter'] = 0
+        self.state['message'] = "来自结构化流程的问候"
+
+    @listen(first_method)
+    def second_method(self):
+        self.state['counter'] += 1
+        self.state['message'] += " - 已更新"
+
+    @listen(second_method)
+    def third_method(self):
+        self.state['counter'] += 1
+        self.state['message'] += " - 再次更新"
+
+        print(f"third_method 后的状态: {self.state}")
+
+
+flow = UnstructuredExampleFlow()
+flow.plot("my_flow_plot")
+flow.kickoff()
+```
+
+![流程可视化图片](/images/crewai-flow-3.png)
+
+**注意：** `id` 字段是自动生成的，并在整个流程执行过程中保留。您无需手动管理或设置它，即使在用新数据更新状态时也会保持。
+
+**关键点：**
+
+- **灵活性：** 您可以动态地向 `self.state` 添加属性，而无需预定义的约束。
+- **简单性：** 适用于状态结构最简或变化显著的直接工作流。
+
+### 结构化状态管理
+
+结构化状态管理利用预定义的模式来确保整个工作流的一致性和类型安全。
+通过使用像 Pydantic 的 `BaseModel` 这样的模型，开发人员可以定义状态的确切形状，从而在开发环境中实现更好的验证和自动完成。
+
+CrewAI 流程中的每个状态都会自动接收一个唯一标识符（UUID），以帮助跟踪和管理状态实例。此 ID 由流程系统自动生成和管理。
+
+```python Code
+from crewai.flow.flow import Flow, listen, start
+from pydantic import BaseModel
+
+
+class ExampleState(BaseModel):
+    # 注意：'id' 字段会自动添加到所有状态
+    counter: int = 0
+    message: str = ""
+
+
+class StructuredExampleFlow(Flow[ExampleState]):
+
+    @start()
+    def first_method(self):
+        # 如果需要，可以访问自动生成的 ID
+        print(f"状态 ID: {self.state.id}")
+        self.state.message = "来自结构化流程的问候"
+
+    @listen(first_method)
+    def second_method(self):
+        self.state.counter += 1
+        self.state.message += " - 已更新"
+
+    @listen(second_method)
+    def third_method(self):
+        self.state.counter += 1
+        self.state.message += " - 再次更新"
+
+        print(f"third_method 后的状态: {self.state}")
+
+
+flow = StructuredExampleFlow()
+flow.kickoff()
+```
+
+![流程可视化图片](/images/crewai-flow-3.png)
+
+**关键点：**
+
+- **定义的模式：** `ExampleState` 清晰地概述了状态结构，增强了代码的可读性和可维护性。
+- **类型安全：** 利用 Pydantic 确保状态属性遵守指定的类型，减少运行时错误。
+- **自动完成：** IDE 可以根据定义的状态模型提供更好的自动完成和错误检查。
+
+### 在非结构化和结构化状态管理之间选择
+
+- **在以下情况下使用非结构化状态管理：**
+
+  - 工作流的状态简单或高度动态。
+  - 灵活性优先于严格的状态定义。
+  - 需要快速原型制作，而无需定义模式的开销。
+
+- **在以下情况下使用结构化状态管理：**
+  - 工作流需要一个定义良好且一致的状态结构。
+  - 类型安全和验证对您的应用程序的可靠性很重要。
+  - 您希望利用 IDE 的功能，如自动完成和类型检查，以获得更好的开发人员体验。
+
+通过提供非结构化和结构化状态管理选项，CrewAI 流程使开发人员能够构建既灵活又健壮的 AI 工作流，满足广泛的应用程序需求。
+
+## 流程持久化
+
+`@persist` 装饰器在 CrewAI 流程中启用自动状态持久化，允许您在重启或不同工作流执行之间保持流程状态。此装饰器可以应用于类级别或方法级别，为您管理状态持久化提供了灵活性。
+
+### 类级别持久化
+
+当应用于类级别时，`@persist` 装饰器会自动持久化所有流程方法的状态：
+
+```python
+@persist  # 默认使用 SQLiteFlowPersistence
+class MyFlow(Flow[MyState]):
+    @start()
+    def initialize_flow(self):
+        # 此方法将自动持久化其状态
+        self.state.counter = 1
+        print("已初始化流程。状态 ID:", self.state.id)
+
+    @listen(initialize_flow)
+    def next_step(self):
+        # 状态（包括 self.state.id）会自动重新加载
+        self.state.counter += 1
+        print("流程状态已持久化。计数器:", self.state.counter)
+```
+
+### 方法级别持久化
+
+为了更精细的控制，您可以将 `@persist` 应用于特定方法：
+
+```python
+class AnotherFlow(Flow[dict]):
+    @persist  # 仅持久化此方法的状态
+    @start()
+    def begin(self):
+        if "runs" not in self.state:
+            self.state["runs"] = 0
+        self.state["runs"] += 1
+        print("方法级别持久化的运行次数:", self.state["runs"])
+```
+
+### 工作原理
+
+1. **唯一状态标识**
+
+   - 每个流程状态自动接收一个唯一的 UUID
+   - 该 ID 在状态更新和方法调用中保留
+   - 支持结构化（Pydantic BaseModel）和非结构化（字典）状态
+
+2. **默认 SQLite 后端**
+
+   - SQLiteFlowPersistence 是默认的存储后端
+   - 状态自动保存到本地 SQLite 数据库
+   - 健壮的错误处理确保在数据库操作失败时有清晰的消息
+
+3. **错误处理**
+   - 对数据库操作的全面错误消息
+   - 在保存和加载期间自动进行状态验证
+   - 在持久化操作遇到问题时提供清晰的反馈
+
+### 重要注意事项
+
+- **状态类型**：支持结构化（Pydantic BaseModel）和非结构化（字典）状态
+- **自动 ID**：如果不存在，`id` 字段会自动添加
+- **状态恢复**：失败或重启的流程可以自动重新加载其先前的状态
+- **自定义实现**：您可以为专门的存储需求提供自己的 FlowPersistence 实现
+
+### 技术优势

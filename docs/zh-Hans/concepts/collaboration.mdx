@@ -1,0 +1,201 @@
+---
+title: 协作（Collaboration）
+description: 如何在 CrewAI 团队中让智能体协同工作、委派任务和有效沟通。
+icon: screen-users
+---
+
+## 概述
+
+CrewAI 中的协作（Collaboration）使智能体（Agents）能够通过委派任务和提问来利用彼此的专业知识，从而像一个团队一样协同工作。当 `allow_delegation=True` 时，智能体会自动获得强大的协作工具（Tools）。
+
+## 快速入门：启用协作
+
+```python
+from crewai import Agent, Crew, Task
+
+# 为智能体启用协作
+researcher = Agent(
+    role="研究专员",
+    goal="对任何主题进行深入研究",
+    backstory="能够访问各种来源的专家研究员",
+    allow_delegation=True,  # 🔑 协作的关键设置
+    verbose=True
+)
+
+writer = Agent(
+    role="内容写作者",
+    goal="基于研究创作引人入胜的内容",
+    backstory="能够将研究转化为引人入胜内容的技术娴熟的写作者",
+    allow_delegation=True,  # 🔑 允许向其他智能体提问
+    verbose=True
+)
+
+# 智能体现在可以自动协作
+crew = Crew(
+    agents=[researcher, writer],
+    tasks=[...],
+    verbose=True
+)
+```
+
+## 智能体协作的工作原理
+
+当 `allow_delegation=True` 时，CrewAI 会自动为智能体提供两个强大的工具：
+
+### 1. **委派工作工具（Delegate Work Tool）**
+
+允许智能体将任务（Tasks）分配给具有特定专业知识的队友。
+
+```python
+# 智能体自动获得此工具：
+# Delegate work to coworker(task: str, context: str, coworker: str)
+```
+
+### 2. **提问工具（Ask Question Tool）**
+
+使智能体能够提出具体问题，从同事那里收集信息。
+
+```python
+# 智能体自动获得此工具：
+# Ask question to coworker(question: str, context: str, coworker: str)
+```
+
+## 协作实战
+
+以下是一个完整的示例，展示了智能体在内容创作任务上的协作：
+
+```python
+from crewai import Agent, Crew, Task, Process
+
+# 创建协作智能体
+researcher = Agent(
+    role="研究专员",
+    goal="查找任何主题的准确、最新信息",
+    backstory="""您是一位严谨的研究员，擅长在各个领域查找可靠来源和核实信息。""",
+    allow_delegation=True,
+    verbose=True
+)
+
+writer = Agent(
+    role="内容写作者",
+    goal="创作引人入胜、结构良好的内容",
+    backstory="""您是一位技术娴熟的内容写作者，擅长将研究转化为引人入胜、易于不同受众阅读的内容。""",
+    allow_delegation=True,
+    verbose=True
+)
+
+editor = Agent(
+    role="内容编辑",
+    goal="确保内容质量和一致性",
+    backstory="""您是一位经验丰富的编辑，注重细节，确保内容在清晰度和准确性方面达到高标准。""",
+    allow_delegation=True,
+    verbose=True
+)
+
+# 创建一个鼓励协作的任务
+article_task = Task(
+    description="""撰写一篇关于'医疗保健中人工智能的未来'的 1000 字综合文章。
+
+    文章应包括：
+    - 当前 AI 在医疗保健中的应用
+    - 新兴趋势和技术
+    - 潜在挑战和道德考量
+    - 未来 5 年的专家预测
+
+    与您的队友协作，确保准确性和质量。""",
+    expected_output="一篇研究充分、引人入胜、结构合理并带有引用的 1000 字文章",
+    agent=writer  # 写作者主导，但可以委派研究给研究员
+)
+
+# 创建协作团队
+crew = Crew(
+    agents=[researcher, writer, editor],
+    tasks=[article_task],
+    process=Process.sequential,
+    verbose=True
+)
+
+result = crew.kickoff()
+```
+
+## 协作模式
+
+### 模式 1：研究 → 写作 → 编辑
+
+```python
+research_task = Task(
+    description="研究量子计算的最新发展",
+    expected_output="包含关键发现和来源的综合研究摘要",
+    agent=researcher
+)
+
+writing_task = Task(
+    description="根据研究发现撰写文章",
+    expected_output="关于量子计算的 800 字引人入胜的文章",
+    agent=writer,
+    context=[research_task]  # 将研究输出作为上下文
+)
+
+editing_task = Task(
+    description="编辑和润色文章以供发表",
+    expected_output="准备发表的文章，具有更高的清晰度和流畅性",
+    agent=editor,
+    context=[writing_task]  # 将文章草稿作为上下文
+)
+```
+
+### 模式 2：协作式单任务
+
+```python
+collaborative_task = Task(
+    description="""为新的 AI 产品创建营销策略。
+
+    写作者：专注于信息传递和内容策略
+    研究员：提供市场分析和竞争对手见解
+
+    共同努力创建综合策略。""",
+    expected_output="有研究支持的完整营销策略",
+    agent=writer  # 主导智能体，但可以委派给研究员
+)
+```
+
+## 分层协作（Hierarchical Collaboration）
+
+对于复杂的项目，使用带有管理器智能体（Manager Agent）的分层流程（Hierarchical Process）：
+
+```python
+from crewai import Agent, Crew, Task, Process
+
+# 管理器智能体协调团队
+manager = Agent(
+    role="项目经理",
+    goal="协调团队工作并确保项目成功",
+    backstory="经验丰富的项目经理，擅长委派和质量控制",
+    allow_delegation=True,
+    verbose=True
+)
+
+# 专员智能体
+researcher = Agent(
+    role="研究员",
+    goal="提供准确的研究和分析",
+    backstory="具有深厚分析能力的专家研究员",
+    allow_delegation=False,  # 专员专注于自己的专业领域
+    verbose=True
+)
+
+writer = Agent(
+    role="写作者",
+    goal="创作引人入胜的内容",
+    backstory="创作引人入胜内容的技术娴熟的写作者",
+    allow_delegation=False,
+    verbose=True
+)
+
+# 由经理主导的任务
+project_task = Task(
+    description="创建一份包含建议的综合市场分析报告",
+    expected_output="执行摘要、详细分析和战略建议",
+    agent=manager  # 经理将委派给专员
+)
+```
